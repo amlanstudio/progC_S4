@@ -1,5 +1,8 @@
+#include "imgui.h"
 #include "p6/p6.h"
+#include <cmath>
 #include <cstdlib>
+#include <vector>
 #define DOCTEST_CONFIG_IMPLEMENT
 #include "doctest/doctest.h"
 
@@ -7,47 +10,47 @@
 
 class circle {
 public:
-  circle(p6::Context &ctx) {
-    xPosition = p6::random::number();
-    yPosition = p6::random::number();
-    radius = 0.2f;
-
-    leftLimit = ctx.current_canvas_width() + 2 * radius;
-    rightLimit = ctx.current_canvas_width() - 2 * radius;
-    topLimit = ctx.current_canvas_height() + 2 * radius;
-    bottomLimit = ctx.current_canvas_height() - 2 * radius;
+  circle() {
+    // position = glm::vec2(p6::random::number(-1, 1), p6::random::number(-1,
+    // 1));
+    position = glm::vec2(0, 0);
+    speed = glm::vec2(p6::random::number(-0.5, 0.05),
+                      p6::random::number(-0.5, 0.05)) *
+            0.01f;
+    // speed = glm::vec2(0.05, 0.05) * 0.001f;
+    radius = 0.05f;
+    leftLimit = -1.80 + radius; // changer pour adapter a la taille de la
+                                // fenetre
+    rightLimit = 1.80 - radius;
+    topLimit = -1 + radius;
+    bottomLimit = 1 - radius;
   }
 
   bool canvasBorders() {
-    if (xPosition < static_cast<float>(leftLimit) &&
-        xPosition > static_cast<float>(rightLimit) &&
-        yPosition<static_cast<float>(topLimit) & yPosition> static_cast<float>(
-            bottomLimit)) {
+    if (position.x < leftLimit || position.x > rightLimit ||
+        position.y < topLimit || position.y > bottomLimit) {
       return false;
     }
     return true;
   }
 
-  float xPosition;
-  float yPosition;
-  float radius;
+  void drawCircle(p6::Context &ctx) {
+    ctx.fill = {p6::NamedColor::Salmon};
+    ctx.circle(p6::Center{position}, p6::Radius{radius});
+  };
+
+  void updatePosition() { position += speed; }
+  void turnBack() { speed = -speed; }
 
 private:
-  int leftLimit;
-  int rightLimit;
-  int topLimit;
-  int bottomLimit;
+  glm::vec2 position;
+  glm::vec2 speed;
+  float radius;
+  float leftLimit;
+  float rightLimit;
+  float topLimit;
+  float bottomLimit;
 };
-
-/*-------------My functions ------------*/
-
-void drawCircle(p6::Context &ctx, circle myCircle) {
-  ctx.fill = {p6::NamedColor::Salmon};
-  ctx.circle(p6::Center{myCircle.xPosition, myCircle.yPosition},
-             p6::Radius{myCircle.radius});
-};
-
-// ------------------
 
 int main(int argc, char *argv[]) {
   { // Run the tests
@@ -67,16 +70,25 @@ int main(int argc, char *argv[]) {
   // Actual app
   auto ctx = p6::Context{{.title = "Simple-p6-Setup"}};
   ctx.maximize_window();
+  std::vector<circle> myBoids;
+  for (int i = 0; i < 20; i++) {
+    myBoids.emplace_back(circle());
+  }
 
   // Declare your infinite update loop.
   ctx.update = [&]() {
     ctx.background({p6::NamedColor::FloralWhite});
-    // ctx.fill = {p6::NamedColor::Salmon};
     ctx.use_stroke = false;
 
-    circle myCircle(ctx);
-    myCircle.canvasBorders();
-    drawCircle(ctx, myCircle);
+    for (int i = 0; i < 20; i++) {
+      myBoids[i].updatePosition();
+
+      if (myBoids[i].canvasBorders()) {
+        myBoids[i].drawCircle(ctx);
+      } else {
+        myBoids[i].turnBack();
+      }
+    }
   };
 
   // Should be done last. It starts the infinite loop.
