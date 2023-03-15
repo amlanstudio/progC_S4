@@ -1,3 +1,5 @@
+#include "glm/fwd.hpp"
+#include "glm/geometric.hpp"
 #include "imgui.h"
 #include "p6/p6.h"
 #include <cmath>
@@ -10,6 +12,7 @@
 
 class circle {
 public:
+  glm::vec2 speed;
   circle() {
     // position = glm::vec2(p6::random::number(-1, 1), p6::random::number(-1,
     // 1));
@@ -18,15 +21,16 @@ public:
                       p6::random::number(-0.5, 0.05)) *
             0.01f;
     // speed = glm::vec2(0.05, 0.05) * 0.001f;
+
     radius = 0.05f;
-    leftLimit = -1.80 + radius; // changer pour adapter a la taille de la
-                                // fenetre
-    rightLimit = 1.80 - radius;
-    topLimit = -1 + radius;
-    bottomLimit = 1 - radius;
   }
 
   bool canvasBorders() {
+    leftLimit =
+        -1.80 + radius; // a changer pour adapter a la taille de la fenetre
+    rightLimit = 1.80 - radius;
+    topLimit = -1 + radius;
+    bottomLimit = 1 - radius;
     if (position.x < leftLimit || position.x > rightLimit ||
         position.y < topLimit || position.y > bottomLimit) {
       return false;
@@ -42,14 +46,18 @@ public:
   void updatePosition() { position += speed; }
   void turnBack() { speed = -speed; }
 
+  void follow(const circle &boid) {
+    glm::vec2 target = boid.position;
+    speed = speed + targetSpeed(target);
+  }
+  glm::vec2 targetSpeed(glm::vec2 target) {
+    glm::vec2 follower = target - position;
+    return follower * 0.08f;
+  }
+
 private:
   glm::vec2 position;
-  glm::vec2 speed;
-  float radius;
-  float leftLimit;
-  float rightLimit;
-  float topLimit;
-  float bottomLimit;
+  float radius, leftLimit, rightLimit, topLimit, bottomLimit;
 };
 
 int main(int argc, char *argv[]) {
@@ -80,13 +88,18 @@ int main(int argc, char *argv[]) {
     ctx.background({p6::NamedColor::FloralWhite});
     ctx.use_stroke = false;
 
-    for (int i = 0; i < 20; i++) {
-      myBoids[i].updatePosition();
+    for (circle &boid : myBoids) {
+      for (circle &otherBoid : myBoids) {
+        if (&boid != &otherBoid) {
+          boid.follow(otherBoid);
+        }
+      }
+      boid.updatePosition();
 
-      if (myBoids[i].canvasBorders()) {
-        myBoids[i].drawCircle(ctx);
+      if (boid.canvasBorders()) {
+        boid.drawCircle(ctx);
       } else {
-        myBoids[i].turnBack();
+        boid.turnBack();
       }
     }
   };
