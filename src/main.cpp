@@ -10,7 +10,8 @@
 #include "doctest/doctest.h"
 
 int main(int argc, char *argv[]) {
-  { // Run the tests
+  {
+    // Run the tests
     if (doctest::Context{}.run() != 0)
       return EXIT_FAILURE;
 
@@ -25,12 +26,32 @@ int main(int argc, char *argv[]) {
   }
 
   // Actual app
-  auto ctx = p6::Context{{.title = "Simple-p6-Setup"}};
-  ctx.maximize_window();
+  // auto ctx = p6::Context{{.title = "Simple-p6-Setup"}};
+  auto ctx = p6::Context{{1280, 720, "Dear ImGui"}};
+  auto boidsNumber = 20;
+  auto followSpeed = 0.00001f;
+  auto avoidDistance = 0.9f;
   std::vector<Boid> myBoids;
-  for (int i = 0; i < 20; i++) {
-    myBoids.emplace_back(Boid(ctx));
-  }
+
+  ctx.maximize_window();
+
+  // My GUInterface
+  ctx.imgui = [&]() {
+    // My window GUI
+    ImGui::Begin("Gestion de mes boids");
+    ImGui::SliderInt("Boids Number", &boidsNumber, 0.f, 100.f);
+    ImGui::SliderFloat("Speed", &followSpeed, 0.f, 0.5f);
+    ImGui::SliderFloat("Avoid Distance", &avoidDistance, 0.f, 2.f);
+    ImGui::End();
+    // Show the official ImGui demo window
+    ImGui::ShowDemoWindow();
+  };
+
+  // for (int i = 0; i < boidsNumber; i++) {
+  //   myBoids.emplace_back(Boid(ctx));
+  // } // mettre dans fonction
+
+  generateBoids(myBoids, boidsNumber, ctx);
 
   // Declare your infinite update loop.
   ctx.update = [&]() {
@@ -40,8 +61,8 @@ int main(int argc, char *argv[]) {
     for (Boid &boid : myBoids) {
       for (Boid &otherBoid : myBoids) {
         if (&boid != &otherBoid) {
-          boid.follow(otherBoid);
-          boid.avoidBoids(boid, otherBoid, 0.9f);
+          boid.follow(otherBoid, followSpeed);
+          boid.avoidBoids(boid, otherBoid, avoidDistance);
         }
       }
       boid.updatePosition();

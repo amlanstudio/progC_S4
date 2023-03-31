@@ -17,10 +17,13 @@ public:
   void drawBoid(p6::Context &ctx);
   void updatePosition();
   void turnBack();
-  void follow(const Boid &boid);
-  glm::vec3 targetSpeed(glm::vec3 target);
+  void follow(const Boid &boid, float followSpeed);
+  glm::vec3 targetSpeed(glm::vec3 target, float followSpeed);
   float getDistance(Boid boid1, Boid boid2);
   glm::vec3 avoidBoids(Boid boid1, Boid boid2, float avoidDistance);
 };
+
+void generateBoids(std::vector<Boid> &myBoids, int boidsNumber,
+                   p6::Context &ctx);
 
 #endif

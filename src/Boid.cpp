@@ -27,6 +27,16 @@ bool Boid::canvasBorders(p6::Context &ctx) {
   return true;
 }
 
+// Reset myBoids
+
+// Generate Boids
+void generateBoids(std::vector<Boid> &myBoids, int boidsNumber,
+                   p6::Context &ctx) {
+  for (int i = 0; i < boidsNumber; i++) {
+    myBoids.emplace_back(Boid(ctx));
+  }
+};
+
 // Draw my Boid
 void Boid::drawBoid(p6::Context &ctx) {
   ctx.fill = {p6::NamedColor::Salmon};
@@ -37,18 +47,19 @@ void Boid::drawBoid(p6::Context &ctx) {
 void Boid::updatePosition() { position += speed; }
 void Boid::turnBack() { speed = -speed; }
 
+// get the speed and direction of the boid I follow
+glm::vec3 Boid::targetSpeed(glm::vec3 target, float followSpeed) {
+  glm::vec3 follower = target - position;
+  return follower * followSpeed;
+}
+
 // follow other boids when we meet an other
-void Boid::follow(const Boid &boid) {
+void Boid::follow(const Boid &boid, float followSpeed) {
   glm::vec3 target = boid.position;
-  speed = speed + targetSpeed(target);
+  speed = speed + targetSpeed(target, followSpeed);
   if (glm::length(speed) > 0.01) {
     speed = glm::normalize(speed) * 0.001f;
   }
-}
-// get the speed and direction of the boid I follow
-glm::vec3 Boid::targetSpeed(glm::vec3 target) {
-  glm::vec3 follower = target - position;
-  return follower * 0.00001f;
 }
 
 // get the distance between 2 boids
