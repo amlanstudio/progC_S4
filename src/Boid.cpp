@@ -27,11 +27,10 @@ bool Boid::canvasBorders(p6::Context &ctx) {
   return true;
 }
 
-// Reset myBoids
-
 // Generate Boids
 void generateBoids(std::vector<Boid> &myBoids, int boidsNumber,
                    p6::Context &ctx) {
+  myBoids.clear();
   for (int i = 0; i < boidsNumber; i++) {
     myBoids.emplace_back(Boid(ctx));
   }
@@ -81,5 +80,4 @@ glm::vec3 Boid::avoidBoids(Boid boid1, Boid boid2, float avoidDistance) {
   }
 }
 
-// faire gui
 //  changer mes ronds en rectangle

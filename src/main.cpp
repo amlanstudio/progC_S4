@@ -39,17 +39,15 @@ int main(int argc, char *argv[]) {
   ctx.imgui = [&]() {
     // My window GUI
     ImGui::Begin("Gestion de mes boids");
-    ImGui::SliderInt("Boids Number", &boidsNumber, 0.f, 100.f);
-    ImGui::SliderFloat("Speed", &followSpeed, 0.f, 0.5f);
+    if (ImGui::SliderInt("Boids Number", &boidsNumber, 0.f, 100.f)) {
+      generateBoids(myBoids, boidsNumber, ctx);
+    };
+    ImGui::SliderFloat("Speed", &followSpeed, -0.1f, 0.5f);
     ImGui::SliderFloat("Avoid Distance", &avoidDistance, 0.f, 2.f);
     ImGui::End();
     // Show the official ImGui demo window
     ImGui::ShowDemoWindow();
   };
-
-  // for (int i = 0; i < boidsNumber; i++) {
-  //   myBoids.emplace_back(Boid(ctx));
-  // } // mettre dans fonction
 
   generateBoids(myBoids, boidsNumber, ctx);
 
