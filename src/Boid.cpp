@@ -15,6 +15,8 @@ Boid::Boid(p6::Context &ctx) {
                     p6::random::number(-0.5, 0.05), (0.0)) *
           0.01f;
   radius = 0.05f;
+  // direction = glm::vec3(p6::random::number(-0.5, 0.5),
+  // p6::random::number(-0.5, 0.5), (0.0));
 }
 
 // My Canvas border
@@ -40,6 +42,8 @@ void generateBoids(std::vector<Boid> &myBoids, int boidsNumber,
 void Boid::drawBoid(p6::Context &ctx) {
   ctx.fill = {p6::NamedColor::Salmon};
   ctx.circle(p6::Center{position}, p6::Radius{radius});
+  // ctx.equilateral_triangle(p6::Center{position}, p6::Radius{radius},
+  //  p6::Rotation{direction});
 };
 
 // New position + turn back on borders
