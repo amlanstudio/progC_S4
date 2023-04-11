@@ -8,7 +8,7 @@
 class Boid {
 
 private:
-  glm::vec3 position, speed;
+  glm::vec3 position, speed, direction;
   float radius, leftLimit, rightLimit, topLimit, bottomLimit;
 
 public:
