@@ -31,6 +31,10 @@ int main(int argc, char *argv[]) {
   auto boidsNumber = 20;
   auto followSpeed = 0.00001f;
   auto avoidDistance = 0.9f;
+  auto turnBack = 0.5f;
+  auto alignDistance = 0.5f;
+  auto alignStrength = 0.5f;
+
   std::vector<Boid> myBoids;
 
   ctx.maximize_window();
@@ -42,13 +46,14 @@ int main(int argc, char *argv[]) {
     if (ImGui::SliderInt("Boids Number", &boidsNumber, 0.f, 100.f)) {
       generateBoids(myBoids, boidsNumber, ctx);
     };
-    ImGui::SliderFloat("Speed", &followSpeed, -0.1f, 0.5f);
+    ImGui::SliderFloat("Follow Speed", &followSpeed, 0.f, 0.5f);
+    ImGui::SliderFloat("Turn Back Speed", &turnBack, 0.f, 0.5f);
     ImGui::SliderFloat("Avoid Distance", &avoidDistance, 0.f, 2.f);
     ImGui::End();
+
     // Show the official ImGui demo window
     ImGui::ShowDemoWindow();
   };
-
   generateBoids(myBoids, boidsNumber, ctx);
 
   // Declare your infinite update loop.
@@ -58,18 +63,16 @@ int main(int argc, char *argv[]) {
 
     for (Boid &boid : myBoids) {
       for (Boid &otherBoid : myBoids) {
-        if (&boid != &otherBoid) {
-          boid.follow(otherBoid, followSpeed);
-          boid.avoidBoids(boid, otherBoid, avoidDistance);
+        if (boid.turnBackOutBorder(turnBack)) {
+          boid.drawBoid(ctx);
+          if (&boid != &otherBoid) {
+            boid.follow(otherBoid, followSpeed);
+            boid.separate(boid, otherBoid, avoidDistance);
+            boid.align(otherBoid, alignDistance, alignStrength);
+          }
         }
       }
       boid.updatePosition();
-
-      if (boid.canvasBorders(ctx)) {
-        boid.drawBoid(ctx);
-      } else {
-        boid.turnBack();
-      }
     }
   };
 

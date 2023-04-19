@@ -9,24 +9,43 @@ Boid::Boid(p6::Context &ctx) {
   topLimit = -1;
   bottomLimit = 1;
 
-  position = glm::vec3(p6::random::number(leftLimit, rightLimit),
-                       p6::random::number(topLimit, bottomLimit), 0);
-  speed = glm::vec3(p6::random::number(-0.5, 0.5),
-                    p6::random::number(-0.5, 0.05), (0.0)) *
-          0.01f;
-  radius = 0.05f;
-  direction = glm::vec3(p6::random::number(-0.5, 0.5),
-                        p6::random::number(-0.5, 0.5), (0.0));
+  m_position = glm::vec3(p6::random::number(leftLimit, rightLimit),
+                         p6::random::number(topLimit, bottomLimit), 0);
+  m_speed = glm::vec3(p6::random::number(-0.5, 0.5),
+                      p6::random::number(-0.5, 0.05), (0.0)) *
+            0.01f;
+  triangleSize = 0.05f;
+  m_direction = glm::vec3(p6::random::number(-0.5, 0.5),
+                          p6::random::number(-0.5, 0.5), (0.0));
 }
 
-// My Canvas border
-bool Boid::canvasBorders(p6::Context &ctx) {
+bool Boid::turnBackOutBorder(float turnBack) {
+  bool outBorders = true;
 
-  if (position.x < leftLimit || position.x > rightLimit ||
-      position.y < topLimit || position.y > bottomLimit) {
-    return false;
+  if (m_position.y < topLimit + triangleSize) {
+    m_position.y = topLimit + triangleSize;
+    m_direction.y = -m_direction.y * turnBack;
+    m_direction.x += turnBack * (1 - abs(m_direction.y));
+    outBorders = false;
+  } else if (m_position.y > bottomLimit - triangleSize) {
+    m_position.y = bottomLimit - triangleSize;
+    m_direction.y = -m_direction.y * turnBack;
+    m_direction.x -= turnBack * (1 - abs(m_direction.y));
+    outBorders = false;
   }
-  return true;
+  if (m_position.x > rightLimit - triangleSize) {
+    m_position.x = rightLimit - triangleSize;
+    m_direction.x = -m_direction.x * turnBack;
+    m_direction.y += turnBack * (1 - abs(m_direction.x));
+    outBorders = false;
+  } else if (m_position.x < leftLimit + triangleSize) {
+    m_position.x = leftLimit + triangleSize;
+    m_direction.x = -m_direction.x * turnBack;
+    m_direction.y -= turnBack * (1 - abs(m_direction.x));
+    outBorders = false;
+  }
+  m_direction = glm::normalize(m_direction);
+  return outBorders;
 }
 
 // Generate Boids
@@ -41,47 +60,60 @@ void generateBoids(std::vector<Boid> &myBoids, int boidsNumber,
 // Draw my Boid
 void Boid::drawBoid(p6::Context &ctx) {
   ctx.fill = {p6::NamedColor::Salmon};
-  // ctx.circle(p6::Center{position}, p6::Radius{radius});
-  ctx.equilateral_triangle(p6::Center{position}, p6::Radius{radius},
-                           p6::Rotation{direction});
+  ctx.equilateral_triangle(p6::Center{m_position}, p6::Radius{triangleSize},
+                           p6::Rotation{m_speed});
 };
 
-// New position + turn back on borders
-void Boid::updatePosition() { position += speed; }
-void Boid::turnBack() { direction = -direction; }
+// New position
+void Boid::updatePosition() { m_position += m_speed; }
 
 // get the speed and direction of the boid I follow
 glm::vec3 Boid::targetSpeed(glm::vec3 target, float followSpeed) {
-  glm::vec3 follower = target - position;
+  glm::vec3 follower = target - m_position;
   return follower * followSpeed;
 }
 
 // follow other boids when we meet an other
 void Boid::follow(const Boid &boid, float followSpeed) {
-  glm::vec3 target = boid.position;
-  speed = speed + targetSpeed(target, followSpeed);
-  if (glm::length(speed) > 0.01) {
-    speed = glm::normalize(speed) * 0.001f;
+  glm::vec3 target = boid.m_position;
+  m_speed = m_speed + targetSpeed(target, followSpeed);
+  if (glm::length(m_speed) > 0.01) {
+    m_speed = glm::normalize(m_speed) * 0.001f;
   }
 }
 
 // get the distance between 2 boids
 float Boid::getDistance(Boid boid1, Boid boid2) {
-  return glm::distance(boid1.position, boid2.position);
+  return glm::distance(boid1.m_position, boid2.m_position);
 }
 
 // avoid the other boids when too closed
 // avoidDistance : min distance between 2 boids
-glm::vec3 Boid::avoidBoids(Boid boid1, Boid boid2, float avoidDistance) {
+void Boid::separate(Boid boid1, Boid boid2, float avoidDistance) {
   float distanceBetweenBoids = getDistance(boid1, boid2);
   if (distanceBetweenBoids < avoidDistance) {
-    glm::vec3 avoidVector = glm::normalize(boid1.position - boid2.position) *
-                            (avoidDistance - distanceBetweenBoids);
-    return avoidVector;
-  } else {
-    // not too closed -> vec avoidVec=0
-    return glm::vec3(0.0f);
+    glm::vec3 avoidVector =
+        glm::normalize(boid1.m_position - boid2.m_position) *
+        (avoidDistance - distanceBetweenBoids);
+    m_speed += avoidVector;
   }
 }
 
-//  changer mes ronds en rectangle
+// get the alignment of boid I follow
+
+void Boid::align(const Boid &boid, float alignDistance, float alignStrength) {
+  glm::vec3 averageDirection(0.0f);
+  int neighborCount = 0;
+
+  const float distance = glm::distance(m_position, boid.m_position);
+  if (distance < alignDistance) {
+    averageDirection += boid.m_direction;
+    neighborCount++;
+  }
+
+  if (neighborCount > 0) {
+    averageDirection /= static_cast<float>(neighborCount);
+    m_direction += alignStrength * (averageDirection - m_direction);
+    m_direction = glm::normalize(m_direction);
+  }
+}

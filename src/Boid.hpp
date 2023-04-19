@@ -8,19 +8,19 @@
 class Boid {
 
 private:
-  glm::vec3 position, speed, direction;
-  float radius, leftLimit, rightLimit, topLimit, bottomLimit;
+  glm::vec3 m_position, m_speed, m_direction;
+  float triangleSize, leftLimit, rightLimit, topLimit, bottomLimit;
 
 public:
   Boid(p6 ::Context &ctx);
-  bool canvasBorders(p6::Context &ctx);
   void drawBoid(p6::Context &ctx);
   void updatePosition();
-  void turnBack();
-  void follow(const Boid &boid, float followSpeed);
+  bool turnBackOutBorder(float turnBack);
   glm::vec3 targetSpeed(glm::vec3 target, float followSpeed);
   float getDistance(Boid boid1, Boid boid2);
-  glm::vec3 avoidBoids(Boid boid1, Boid boid2, float avoidDistance);
+  void follow(const Boid &boid, float followSpeed);
+  void separate(Boid boid1, Boid boid2, float avoidDistance);
+  void align(const Boid &boid, float alignDistance, float alignStrength);
 };
 
 void generateBoids(std::vector<Boid> &myBoids, int boidsNumber,
